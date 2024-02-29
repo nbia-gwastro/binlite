@@ -25,7 +25,8 @@ Users can accomplish this in two separate ways:
 		total     : total accretion rate series onto the binary (in units of viscous feeding rate)
 
 	e.g.
-		ts = AccretionSeries(0.3, n_orbits=5, n_modes=29)
+		import binlite as blt
+		ts = blt.AccretionSeries(0.3, n_orbits=5, n_modes=29)
 		orbits = ts.time
 		mdot_primary = ts.primary
 		mdot_secondary = ts.secondary
@@ -35,6 +36,7 @@ Users can accomplish this in two separate ways:
    (Will generate an AccretionSeries object as an intermediary)
 
    e.g.
+   		from binlite import orbits, primary, secondary, total
    		orbits = orbits(0.5, n_orbits=5, n_modes=29, retrograde=True)
 		mdot_primary = primary(0.5, n_orbits=5, n_modes=29, retrograde=True)
 		mdot_secondary = secondary(0.5, n_orbits=5, n_modes=29, retrograde=True)
