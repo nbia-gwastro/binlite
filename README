@@ -32,7 +32,7 @@ Users can accomplish this in two separate ways:
 		mdot_total = ts.total
 
 2. Directly call the functions 'primary', 'secondary', 'total', 'orbits' with the same signature as AccretionSeries objects.
-   (Will generate an AccretionSeries as an intermediary)
+   (Will generate an AccretionSeries object as an intermediary)
 
    e.g.
    		orbits = orbits(0.5, n_orbits=5, n_modes=29, retrograde=True)
