@@ -52,7 +52,7 @@ class AccretionSeries:
 			print("error : exceeded maximum eccentricity: prograde (0.8), retrograde (0.7)")
 			quit()
 
-		if retrograde==False:
+		if retrograde == False:
 			if (eccentricity < 0.1) & (n_orbits >= lump_period):
 				case = 'prograde_lump'
 				mode = 1
@@ -120,7 +120,7 @@ class AccretionSeries:
 	
 		: return : (ndarray) periodic accretion rate timeseries
 		"""
-		dm = self.__compute_signal_multi_mode(self.data1, self.mode)
+		dm = self.__compute_signal_mode(self.data1, self.mode)
 		idx = int(len(dm) * self.remainder)
 		base = np.tile(dm, self.repeats)
 		return np.concatenate([base, dm[:idx]])
@@ -132,7 +132,7 @@ class AccretionSeries:
 	
 		: return : (ndarray) periodic accretion rate timeseries
 		"""
-		dm = self.__compute_signal_multi_mode(self.data2, self.mode)
+		dm = self.__compute_signal_mode(self.data2, self.mode)
 		idx = int(len(dm) * self.remainder)
 		base = np.tile(dm, self.repeats)
 		return np.concatenate([base, dm[:idx]])
@@ -144,13 +144,13 @@ class AccretionSeries:
 	
 		: return : (ndarray) periodic accretion rate timeseries
 		"""
-		dm = self.__compute_signal_multi_mode(self.dataT, self.mode)
+		dm = self.__compute_signal_mode(self.dataT, self.mode)
 		idx = int(len(dm) * self.remainder)
 		base = np.tile(dm, self.repeats)
 		return np.concatenate([base, dm[:idx]])
 
 	# -------------------------------------------------------------------------
-	def __compute_signal_multi_mode(self, data, m):
+	def __compute_signal_mode(self, data, m):
 		fs = []
 		i1 = np.where(self.ecc >= self.e_smpls)[0][-1]
 		i0 = i1 + 1
