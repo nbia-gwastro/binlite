@@ -2,11 +2,12 @@ from setuptools import setup, find_packages
 
 MAJOR = 0
 MINOR = 1
-MICRO = 1
+MICRO = 0
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 NAME             = "binlite"
 AUTHOR           = "Christopher Tiede & Daniel D'Orazio"
+AUTHRO_EMAIL     = "22056557+ctiede@users.noreply.github.com"
 DESCRIPTION      = "Rapidly generate periodic lightcurves of accreting binaries"
 LONG_DESCRIPTION = "Generate photometric variability templates for equal mass \
                     binaries in co-planar gaseous disks, spanning a continuous \
@@ -21,11 +22,12 @@ def setup_package():
         version = VERSION,
         author  = AUTHOR,
         maintainer = AUTHOR,
+        author_email = AUTHRO_EMAIL,
         description  = DESCRIPTION,
         long_description = LONG_DESCRIPTION,
-        packages = find_packages(),
         include_package_data = True,
-        package_data = {'binlite': ['data/*.dat']},
+        packages = find_packages(),
+        package_data = {"binlite": ["data/*.dat"]},
         license = "MIT",
         platforms = ['Any'],
         url = GIT_URL,
