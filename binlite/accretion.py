@@ -12,12 +12,12 @@ retro_beat_p = 2
 def get_data_path():
 	return pkg_resources.resource_filename(__name__, 'data/')
 
-data_p1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL5_N60_sigma20_makeccInput.dat','r'))
-data_p2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL5_N60_sigma20_makeccInput.dat','r'))
-data_pT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL5_N60_sigma20_makeccInput.dat', 'r'))
-data_r1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_retroL2_makeccInput.dat','r'))
-data_r2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_retroL2_makeccInput.dat','r'))
-data_rT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_retroL2_makeccInput.dat', 'r'))
+data_p1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_p2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_pT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat', 'r'))
+data_r1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
+data_r2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
+data_rT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat', 'r'))
 
 
 # =============================================================================
@@ -51,10 +51,10 @@ class AccretionSeries:
 		self.is_retro = retrograde
 
 		if n_modes > 29:
-			print("error : exceeded maximum number of Fourier modes (29)")
+			print("error : exceeded maximum number of prograde Fourier modes (29)")
 			quit()
-		if eccentricity > self.__max_eccentricity():
-			print("error : exceeded maximum eccentricity: prograde (0.8), retrograde (0.7)")
+		if eccentricity > 0.8:
+			print("error : exceeded maximum eccentricity: 0.8")
 			quit()
 
 		if retrograde == False:
@@ -65,6 +65,8 @@ class AccretionSeries:
 				case = 'prograde_nolump'
 				mode = lump_period
 		else:
+			if eccentricity > 0.79:
+				self.ecc = 0.79
 			if (eccentricity > 0.55) & (n_orbits >= retro_beat_p):
 				case = 'retrograde_beat'
 				mode = 1
@@ -175,14 +177,8 @@ class AccretionSeries:
 			fs.append(f)
 		return np.array(fs)
 
-	def __max_eccentricity(self):
-		if self.is_retro:
-			return 0.71
-		else:
-			return 0.81
 
-
-# Direct callable functions
+# Direct user callable functions
 # =============================================================================
 def orbits(eccentricity:float, n_modes:int=20, n_orbits:int=10, retrograde:bool=False):
 	return AccretionSeries(eccentricity, n_modes=n_modes, n_orbits=n_orbits, retrograde=retrograde).time
@@ -212,7 +208,7 @@ if __name__ == '__main__':
 		ax.set_xlabel(r'Orbits')
 		ax.set_ylabel(r'$\dot{M} / \dot{M}_0$')
 		ax.set_title(r'e = {:.2f}, {:}'.format(ts.ecc, "Retrograde" if ts.is_retro else "Prograde"))
-	for x in np.arange(0.1, 0.8, 0.1):
+	for x in np.arange(0.1, 0.9, 0.1):
 		print('ecc : {:.2f}'.format(x))
 		fig, [ax1, ax2] = plt.subplots(1, 2, sharey=True, figsize=[8,4])
 		plot_series(ax1, AccretionSeries(x, n_modes=29, n_orbits=5, retrograde=False))
