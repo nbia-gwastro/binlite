@@ -22,18 +22,23 @@ data_rT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_retroL2_makeccInput.d
 
 # =============================================================================
 class AccretionSeries:
-	"""
-	For generating mock timseries of accretion rates onto equal mass binaries of a desired eccentricity
+	"""For generating mock timseries of accretion rates onto equal mass binaries of a desired eccentricity
 		- prograde binaries with e < 0.1 will recover additional 5-orbit features if n_orbs > 5
 		- retrograde binaries with e > 0.55 will recover additional 2-orbit features if n_orbs > 2
 
-	Parameters :
-		eccentricity : desired binary eccentricity for accretion series (max 0.8 prograde / 0.7 retrograde)
-		n_modes  : number of modes to be used in constructing the series (max 29)
-		n_orbits : number of periods to generate
-		retrograde : whether the binary should be regarded as retrograde to the CBD (otherwise prograde assumed)
+	Parameters
+	----------
+		eccentricity: 
+			desired binary eccentricity for accretion series (max 0.8)
+		n_modes (optional, default=20): 
+			number of modes to be used in constructing the series (max 29)
+		n_orbits (optional, default=10):
+			number of periods to generate
+		retrograde (optional, default=False): 
+			whether the binary should be regarded as retrograde to the CBD (otherwise prograde assumed)
 
-	Attributes :
+	Public attributes
+	-----------------
 		time      : values of the time associated with generated accretion series (in orbits)
 		primary   : periodic accretion series for the primary component (in units of viscous feeding rate)
 		secondary : periodic accretion series for the secondary component (in units of viscous feeding rate)
@@ -91,11 +96,12 @@ class AccretionSeries:
 		self.nx = len(self.data1)
 		self.x  = np.linspace(0.0, 2.*np.pi, self.nx)
 
+	# Public attributes
 	# -------------------------------------------------------------------------
 	@property
 	def time(self):
 		"""
-		Gives a timeserie of the orbits associated to a signal of equivalent n_orbits
+		Gives a timeseries of the orbits associated to a signal of equivalent n_orbits
 	
 		: return : (ndarray) number of orbits for accretion rate/luminosity timeseries
 		"""
@@ -149,6 +155,7 @@ class AccretionSeries:
 		base = np.tile(dm, self.repeats)
 		return np.concatenate([base, dm[:idx]])
 
+	# Internal methods
 	# -------------------------------------------------------------------------
 	def __compute_signal_mode(self, data, m):
 		fs = []
@@ -190,9 +197,10 @@ def total(eccentricity:float, n_modes:int=20, n_orbits:int=10, retrograde:bool=F
 	return AccretionSeries(eccentricity, n_modes=n_modes, n_orbits=n_orbits, retrograde=retrograde).total
 
 
-# To test script by running it directly
-#  - Generates plots to compare directly to Figs. 2 & 4 
+# To test script by running the module as a script: python -m binlite.accretion
+#  - Generates plots to compare with Figs. 2 & 4 
 #    in D'Orazio, Duffell & Tiede (2024)
+#  - requires extra matplotlib dependency
 # =============================================================================
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt
