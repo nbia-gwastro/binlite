@@ -1,3 +1,4 @@
-"""Rapidly generate periodic accretion and lightcurve templates for eccentric binaries"""
+"""Rapidly generate periodic accretion and flux timeseries templates for eccentric binaries"""
 
-from .accretion import AccretionSeries, orbits, primary, secondary, total
+from .accretion import AccretionSeries
+from .flux import BinaryAlphaDisk
