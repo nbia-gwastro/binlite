@@ -18,9 +18,9 @@ data_pT_l1 = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL1_NFourier60_
 data_p1_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
 data_p2_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
 data_pT_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat', 'r'))
-data_r1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
-data_r2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
-data_rT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat', 'r'))
+data_r1_l2 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
+data_r2_l2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
+data_rT_l2 = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat', 'r'))
 
 
 # =============================================================================
@@ -31,21 +31,21 @@ class AccretionSeries:
 
 	Parameters
 	----------
-		eccentricity: 
-			desired binary eccentricity for accretion series (max 0.8)
-		n_modes (optional, default=20): 
-			number of modes to be used in constructing the series (max 29)
-		n_orbits (optional, default=10):
-			number of periods to generate
-		retrograde (optional, default=False): 
-			whether the binary should be regarded as retrograde to the CBD (otherwise prograde assumed)
+	eccentricity: 
+		desired binary eccentricity for accretion series (max 0.8)
+	n_modes (optional, default=20): 
+		number of modes to be used in constructing the series (max 29)
+	n_orbits (optional, default=10):
+		number of periods to generate
+	retrograde (optional, default=False): 
+		whether the binary should be regarded as retrograde to the CBD (otherwise prograde assumed)
 
 	Public attributes
 	-----------------
-		time      : values of the time associated with generated accretion series (in orbits)
-		primary   : periodic accretion series for the primary component (in units of viscous feeding rate)
-		secondary : periodic accretion series for the secondary component (in units of viscous feeding rate)
-		total     : total accretion rate series onto the binary (in units of viscous feeding rate)
+	time      : values of the time associated with generated accretion series (in orbits)
+	primary   : periodic accretion series for the primary component (in units of viscous feeding rate)
+	secondary : periodic accretion series for the secondary component (in units of viscous feeding rate)
+	total     : total accretion rate series onto the binary (in units of viscous feeding rate)
 	"""
 	def __init__(self, eccentricity:float, n_modes:int=20, n_orbits:int=10, retrograde:bool=False):
 		self.ecc = eccentricity
@@ -86,9 +86,9 @@ class AccretionSeries:
 			self.data2 = data_p2_l1
 			self.dataT = data_pT_l1
 		else:
-			self.data1 = data_r1
-			self.data2 = data_r2
-			self.dataT = data_rT
+			self.data1 = data_r1_l2
+			self.data2 = data_r2_l2
+			self.dataT = data_rT_l2
 
 		if self.case == 'prograde_lump':
 			repeats = self.orbits / lump_period

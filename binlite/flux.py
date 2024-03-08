@@ -20,29 +20,29 @@ class BinaryAlphaDisk:
 
 	Parameters
 	----------
-		eccentricity: 
-			desired binary eccentricity for accretion series (max 0.8)
-		period_yr:
-			binary's orbital period in years 
-		total_mass_msun:
-			total binary mass in solar-masses
-		luminosity_distance_pc:
-			luminosity distance to the source binary in parsec
-		eddington_ratio (optional, default=1.0):
-			ratio of the total rate onto the binary to the eddington rate
-		accretion_efficiency (optional, default=0.1):
-			efficiency at which gravitational energy is converted to radiation
-		md_inner_edge_risco (optional, default=1.0):
-			inner edge of the primary component's minidisk in units of the isco-radius
-			for integrating the minidisk spectrum
-		cbd_inner_edge_a (optional, default=2.0):
-			inner edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		cbd_outer_edge_a (optional, default=100.0):
-			outer edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		inclination_deg (optional, default=0.0):
-			viewing inclination for the coplanar binary-disk system in degrees
+	eccentricity: 
+		desired binary eccentricity for accretion series (max 0.8)
+	period_yr:
+		binary's orbital period in years 
+	total_mass_msun:
+		total binary mass in solar-masses
+	luminosity_distance_pc:
+		luminosity distance to the source binary in parsec
+	eddington_ratio (optional, default=1.0):
+		ratio of the total rate onto the binary to the eddington rate
+	accretion_efficiency (optional, default=0.1):
+		efficiency at which gravitational energy is converted to radiation
+	md_inner_edge_risco (optional, default=1.0):
+		inner edge of the primary component's minidisk in units of the isco-radius
+		for integrating the minidisk spectrum
+	cbd_inner_edge_a (optional, default=2.0):
+		inner edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	cbd_outer_edge_a (optional, default=100.0):
+		outer edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	inclination_deg (optional, default=0.0):
+		viewing inclination for the coplanar binary-disk system in degrees
 
 	Public methods
 	--------------
@@ -174,11 +174,11 @@ def time(accretion_series:AccretionSeries, period_yr:float):
 
 	Parameters
 	----------
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-			 - holds desired number of orbits
-		period_yr:
-			binary's orbital period in years 
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
+		 - holds desired number of orbits
+	period_yr:
+		binary's orbital period in years 
 
 	Return
 	------
@@ -205,32 +205,32 @@ def normalized_flux_series(frequency:float,
 
 	Parameters
 	----------
-		frequency: 
-			observation frequncey in Hz
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-			 - also holds desired number of orbits and fourier modes in the periodic reconstruction
-		period_yr:
-			binary's orbital period in years 
-		total_mass_msun:
-			total binary mass in solar-masses
-		luminosity_distance_pc:
-			luminosity distance to the source binary in parsec
-		eddington_ratio (optional, default=1.0):
-			ratio of the total rate onto the binary to the eddington rate
-		accretion_efficiency (optional, default=0.1):
-			efficiency at which gravitational energy is converted to radiation
-		md_inner_edge_risco (optional, default=1.0):
-			inner edge of the primary component's minidisk in units of the isco-radius
-			for integrating the minidisk spectrum
-		cbd_inner_edge_a (optional, default=2.0):
-			inner edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		cbd_outer_edge_a (optional, default=100.0):
-			outer edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		inclination_deg (optional, default=0.0):
-			viewing inclination for the coplanar binary-disk system in degrees
+	frequency: 
+		observation frequncey in Hz
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
+		 - also holds desired number of orbits and fourier modes in the periodic reconstruction
+	period_yr:
+		binary's orbital period in years 
+	total_mass_msun:
+		total binary mass in solar-masses
+	luminosity_distance_pc:
+		luminosity distance to the source binary in parsec
+	eddington_ratio (optional, default=1.0):
+		ratio of the total rate onto the binary to the eddington rate
+	accretion_efficiency (optional, default=0.1):
+		efficiency at which gravitational energy is converted to radiation
+	md_inner_edge_risco (optional, default=1.0):
+		inner edge of the primary component's minidisk in units of the isco-radius
+		for integrating the minidisk spectrum
+	cbd_inner_edge_a (optional, default=2.0):
+		inner edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	cbd_outer_edge_a (optional, default=100.0):
+		outer edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	inclination_deg (optional, default=0.0):
+		viewing inclination for the coplanar binary-disk system in degrees
 
 	Return
 	------
@@ -260,32 +260,32 @@ def periodic_flux_series(frequency:float,
 
 	Parameters
 	----------
-		frequency: 
-			observation frequncey in Hz
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity 
-			- also holds desired number of orbits and fourier modes in the periodic reconstruction
-		period_yr:
-			binary's orbital period in years 
-		total_mass_msun:
-			total binary mass in solar-masses
-		luminosity_distance_pc:
-			luminosity distance to the source binary in parsec
-		eddington_ratio (optional, default=1.0):
-			ratio of the total rate onto the binary to the eddington rate
-		accretion_efficiency (optional, default=0.1):
-			efficiency at which gravitational energy is converted to radiation
-		md_inner_edge_risco (optional, default=1.0):
-			inner edge of the primary component's minidisk in units of the isco-radius
-			for integrating the minidisk spectrum
-		cbd_inner_edge_a (optional, default=2.0):
-			inner edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		cbd_outer_edge_a (optional, default=100.0):
-			outer edge of the circumbinary disk in units of the binary semi-major axis distance
-			for integrating the outer-disk spectrum
-		inclination_deg (optional, default=0.0):
-			viewing inclination for the coplanar binary-disk system in degrees
+	frequency: 
+		observation frequncey in Hz
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity 
+		- also holds desired number of orbits and fourier modes in the periodic reconstruction
+	period_yr:
+		binary's orbital period in years 
+	total_mass_msun:
+		total binary mass in solar-masses
+	luminosity_distance_pc:
+		luminosity distance to the source binary in parsec
+	eddington_ratio (optional, default=1.0):
+		ratio of the total rate onto the binary to the eddington rate
+	accretion_efficiency (optional, default=0.1):
+		efficiency at which gravitational energy is converted to radiation
+	md_inner_edge_risco (optional, default=1.0):
+		inner edge of the primary component's minidisk in units of the isco-radius
+		for integrating the minidisk spectrum
+	cbd_inner_edge_a (optional, default=2.0):
+		inner edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	cbd_outer_edge_a (optional, default=100.0):
+		outer edge of the circumbinary disk in units of the binary semi-major axis distance
+		for integrating the outer-disk spectrum
+	inclination_deg (optional, default=0.0):
+		viewing inclination for the coplanar binary-disk system in degrees
 
 	Return
 	------
@@ -301,11 +301,11 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
 
 	Parameters
 	----------
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-			 - holds desired number of orbits
-		bad:
-			a BinaryAlphaDisk object containing desired system specifics
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
+		 - holds desired number of orbits
+	bad:
+		a BinaryAlphaDisk object containing desired system specifics
 
 	Return
 	------
@@ -318,13 +318,13 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
 
 	Parameters
 	----------
-		frequency: 
-			observation frequncey in Hz
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-			 - holds desired number of orbits
-		bad:
-			a BinaryAlphaDisk object containing desired system specifics
+	frequency: 
+		observation frequncey in Hz
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
+		 - holds desired number of orbits
+	bad:
+		a BinaryAlphaDisk object containing desired system specifics
 
 	Return
 	------
@@ -342,13 +342,13 @@ def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSer
 
 	Parameters
 	----------
-		frequency: 
-			observation frequncey in Hz
-		accretion_series:
-			an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-			 - holds desired number of orbits
-		bad:
-			a BinaryAlphaDisk object containing desired system specifics
+	frequency: 
+		observation frequncey in Hz
+	accretion_series:
+		an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
+		 - holds desired number of orbits
+	bad:
+		a BinaryAlphaDisk object containing desired system specifics
 
 	Return
 	------
@@ -362,10 +362,10 @@ def magnitude_from_flux(specific_flux, zero_point_flux):
 
 	Parameters
 	----------
-		specific_flux: 
-			an array of specific flux timeseries (e.g. generated from periodic_flux_series)
-		zero_point_flux:
-			the zero-point normalizing flux for the observing band associated with the frequency of specific_flux
+	specific_flux: 
+		an array of specific flux timeseries (e.g. generated from periodic_flux_series)
+	zero_point_flux:
+		the zero-point normalizing flux for the observing band associated with the frequency of specific_flux
 
 	Return
 	------
