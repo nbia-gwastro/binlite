@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 MAJOR = 0
-MINOR = 1
-MICRO = 3
+MINOR = 2
+MICRO = 1
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 NAME             = "binlite"
@@ -31,7 +31,7 @@ def setup_package():
         license = "MIT",
         platforms = ['Any'],
         url = GIT_URL,
-        install_requires = ['numpy', 'scipy'],
+        install_requires = ['setuptools', 'numpy', 'scipy'],
     )
     setup(**metadata)
 
