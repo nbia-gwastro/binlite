@@ -12,9 +12,12 @@ retro_beat_p = 2
 def get_data_path():
 	return pkg_resources.resource_filename(__name__, 'data/')
 
-data_p1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
-data_p2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
-data_pT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat', 'r'))
+data_p1_l1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL1_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_p2_l1 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL1_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_pT_l1 = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL1_NFourier60_sigma10P_Nt1000_makeccInput.dat', 'r'))
+data_p1_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_p2_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat','r'))
+data_pT_l5 = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_progL5_NFourier60_sigma10P_Nt1000_makeccInput.dat', 'r'))
 data_r1 = np.genfromtxt(open(get_data_path() + 'q1_MdotP_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
 data_r2 = np.genfromtxt(open(get_data_path() + 'q1_MdotS_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat','r'))
 data_rT = np.genfromtxt(open(get_data_path() + 'q1_MdotTot_RetroL2_Discoe0p8_NFourier30_sigma10P_Nt1000_makeccInput.dat', 'r'))
@@ -57,29 +60,31 @@ class AccretionSeries:
 			print("error : exceeded maximum eccentricity: 0.8")
 			quit()
 
+		mode = 1
 		if retrograde == False:
 			if (eccentricity < 0.1) & (n_orbits >= lump_period):
 				case = 'prograde_lump'
-				mode = 1
 			else:
 				case = 'prograde_nolump'
-				mode = lump_period
 		else:
 			if eccentricity > 0.79:
 				self.ecc = 0.79
 			if (eccentricity > 0.55) & (n_orbits >= retro_beat_p):
 				case = 'retrograde_beat'
-				mode = 1
 			else:
 				case = 'retrograde_nobeat'
 				mode = retro_beat_p
 		self.case = case
 		self.mode = mode
-		
-		if retrograde == False:
-			self.data1 = data_p1
-			self.data2 = data_p2
-			self.dataT = data_pT
+
+		if self.case == 'prograde_lump':
+			self.data1 = data_p1_l5
+			self.data2 = data_p2_l5
+			self.dataT = data_pT_l5
+		elif self.case == 'prograde_nolump':
+			self.data1 = data_p1_l1
+			self.data2 = data_p2_l1
+			self.dataT = data_pT_l1
 		else:
 			self.data1 = data_r1
 			self.data2 = data_r2
