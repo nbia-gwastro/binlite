@@ -1,5 +1,5 @@
 import numpy as np
-import scipy as sc
+from scipy.integrate import quad
 from .constants import *
 from .accretion import AccretionSeries
 
@@ -164,7 +164,7 @@ class BinaryAlphaDisk:
 
 	def __fnu_disk(self, nu, tpr_min, rpr_min, r_in, r_out, inc, dst):
 		prefac = 2.0 * np.pi * np.cos(inc) / dst**2
-		return prefac * sc.integrate.quad(self.__bnu_disk, r_in, r_out, args=(nu, tpr_min, rpr_min))[0]
+		return prefac * quad(self.__bnu_disk, r_in, r_out, args=(nu, tpr_min, rpr_min))[0]
 
 
 # User callable functions: public API
