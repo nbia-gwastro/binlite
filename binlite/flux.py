@@ -241,7 +241,8 @@ def normalized_flux_series(frequency:float,
 	chi1 = bad.primary_flux_ratio(frequency)
 	chi2 = bad.secondary_flux_ratio(frequency)
 	disk_flux = 1.0 - chi1 - ch2
-	return chi1 * acc.primary / np.mean(acc.total) + chi2 * acc.secondary / np.mean(acc.total) + disk_flux
+	mdot_mean = np.mean(acc.total)
+	return chi1 * acc.primary / mdot_mean + chi2 * acc.secondary / mdot_mean + disk_flux
 
 def periodic_flux_series(frequency:float, 
 				 		 accretion_series:AccretionSeries, 
@@ -333,7 +334,8 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
 	chi1 = bad.primary_flux_ratio(frequency)
 	chi2 = bad.secondary_flux_ratio(frequency)
 	disk_flux = 1.0 - chi1 - chi2
-	return chi1 * acc.primary / np.mean(acc.total) + chi2 * acc.secondary / np.mean(acc.total) + disk_flux
+	mdot_mean = np.mean(acc.total)
+	return chi1 * acc.primary / mdot_mean + chi2 * acc.secondary / mdot_mean + disk_flux
 
 def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
 	"""Generate a periodic flux timeseries at given frequency from a BinaryAlphaDisk object
