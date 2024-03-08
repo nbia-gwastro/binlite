@@ -34,7 +34,7 @@ Users can generate a periodic accretion template in two separate ways:
 
 Similarly, users have acces to two means of creating an associated flux timeseries, all of which first require the creation of an `AccretionSeries` object off which to compute the flux variability:
 
-1. Directly call the functions `periodic_flux_series` and `normalized_flux_series` for a flux series in mJy or normalized against the total average flux, respectively. These functions require the user to supply the observing frequency in hertz, an `AccretionSeries` object, the orbital period of the binary in years, the total mass of the binary in solar-masses, and the luminosity distance to the binary in parsec. They also optionally accept specifications for the accretion eddington fraction, accretion efficiency, observer inclination angle in degrees, as well as the inner and outer edges of both the minidisks and the outer-disk for the integration fothe blackbody spectra; e.g.
+1. Directly call the functions `periodic_flux_series` and `normalized_flux_series` for a flux series or normalized against the total average flux, respectively. These functions require the user to supply the observing frequency in hertz, an `AccretionSeries` object, the orbital period of the binary in years, the total mass of the binary in solar-masses, and the luminosity distance to the binary in parsec. They also optionally accept specifications for the accretion eddington fraction, accretion efficiency, observer inclination angle in degrees, as well as the inner and outer edges of both the minidisks and the outer-disk for the integration fothe blackbody spectra; e.g.
 
 	```python
 	from binlite import AccretionSeries
