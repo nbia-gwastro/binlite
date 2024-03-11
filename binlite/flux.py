@@ -1,17 +1,7 @@
 import numpy as np
 from scipy.integrate import quad
 from .constants import *
-from .accretion import AccretionSeries
-
-
-# ===================================================================
-def Qfit(ecc):
-	""" 
-	Fitting func for Q(e) from D'Orazio, Duffell, & Tiede 2024, Eq.4 
-
-	ecc : binary orbital eccentricity 
-	"""
-	return (1. - (2. - ecc**2 - 2. * ecc**3)*ecc) / (1. + (2. + ecc**2) * ecc)
+from .accretion import AccretionSeries, Qfit
 
 
 # ===================================================================

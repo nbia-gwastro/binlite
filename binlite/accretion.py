@@ -7,6 +7,14 @@ lump_period  = 5
 retro_beat_p = 2
 
 
+# ===================================================================
+def Qfit(ecc):
+	""" 
+	Fitting func for Q(e) from D'Orazio, Duffell, & Tiede 2024, Eq.4 
+	"""
+	return (1. - (2. - ecc**2 - 2. * ecc**3)*ecc) / (1. + (2. + ecc**2) * ecc)
+
+
 # Load files at startup/input to optimize series generation
 # =============================================================================
 def get_data_path():
@@ -213,7 +221,7 @@ if __name__ == '__main__':
 		ax.set_xlabel(r'Orbits')
 		ax.set_ylabel(r'$\dot{M} / \dot{M}_0$')
 		ax.set_title(r'e = {:.2f}, {:}'.format(ts.ecc, "Retrograde" if ts.is_retro else "Prograde"))
-	for x in np.arange(0.1, 0.9, 0.1):
+	for x in np.arange(0.1, 0.9, 0.2):
 		print('ecc : {:.2f}'.format(x))
 		fig, [ax1, ax2] = plt.subplots(1, 2, sharey=True, figsize=[8,4])
 		plot_series(ax1, AccretionSeries(x, n_modes=29, n_orbits=5, retrograde=False))

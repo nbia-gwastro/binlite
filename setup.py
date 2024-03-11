@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
-MAJOR = 0
-MINOR = 2
-MICRO = 1
+MAJOR = 1
+MINOR = 0
+MICRO = 0
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 NAME             = "binlite"

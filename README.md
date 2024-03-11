@@ -56,7 +56,7 @@ Similarly, users have acces to two means of creating an associated flux timeseri
 	```python
 	import binlite as blt
 	acc = blt.AccretionSeries(eccentricity)
-	bad = blt.BinaryAlphaDisk(eccentricity, period_yr, total_mass_msun, luminosity_distance_pc, accretion_efficiency=0.01)
+	bad = blt.BinaryAlphaDisk(acc.ecc, period_yr, total_mass_msun, luminosity_distance_pc, accretion_efficiency=0.01)
 	time = blt.flux.time_from_bad(acc, bad)
 	fnu_series = blt.flux.periodic_flux_series_from_bad(frequency, acc, bad)
 	fnu_normal = blt.flux.normalized_flux_series_from_bad(frequency, acc, bad)
@@ -66,5 +66,5 @@ The flux module also contains a convenience function `magnitude_from_flux` which
 
 The calculations for generating flux timeseries assume that the outer-disk and each minidisk are described by independent Shakura-Sunyaev alpha-disk solutions. See the associated paper D'Orazio, Duffell & Tiede (2024) for more detail.
 
-Each module can also be run directly by running `python -m binlite.accretion` or `python -m binlite.flux`. For each module this will run a small example script (that additionally requires a `matplotlib` installation). The `accretion` example will generate figures like Figs. 2, 3 & 4 in D'Orazio, Duffell & Tiede (2024), and the `flux` example will create figures like Fig. 7 (without the lensed or boosted components).
+Each module can also be run directly by running `python -m binlite.accretion` or `python -m binlite.flux`. For each module this will run a small example script (that additionally requires a `matplotlib` installation; not specified as a dependency). The `accretion` example will generate figures like Figs. 2, 3 & 4 in D'Orazio, Duffell & Tiede (2024), and the `flux` example will create figures like Fig. 7 (without the lensed or boosted components).
 
