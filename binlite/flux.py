@@ -227,10 +227,10 @@ def normalized_flux_series(frequency:float,
 	(ndarry) normalized periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
 	"""
 	acc = accretion_series
-	bad = BinaryAlphaDisk(acc.ecc, period, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
+	bad = BinaryAlphaDisk(acc.ecc, period_yr, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
 	chi1 = bad.primary_flux_ratio(frequency)
 	chi2 = bad.secondary_flux_ratio(frequency)
-	disk_flux = 1.0 - chi1 - ch2
+	disk_flux = 1.0 - chi1 - chi2
 	mdot_mean = np.mean(acc.total)
 	return chi1 * acc.primary / mdot_mean + chi2 * acc.secondary / mdot_mean + disk_flux
 
@@ -282,8 +282,8 @@ def periodic_flux_series(frequency:float,
 	(ndarry) periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
 	"""
 	acc = accretion_series
-	bad = BinaryAlphaDisk(acc.ecc, period, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
-	return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, ts, bad)
+	bad = BinaryAlphaDisk(acc.ecc, period_yr, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
+	return bad.fnu_total(frequency) * normalized_flux_series_from_bad(frequency, acc, bad)
 
 # -----------------------------------------------------------------------------
 def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
@@ -303,7 +303,7 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
 	"""
 	return time(accretion_series, bad.p / yr2sec)
 
-def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
+def normalized_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
 	"""Generate a normalized periodic flux timeseries at given frequency from a BinaryAlphaDisk object
 
 	Parameters
@@ -344,7 +344,7 @@ def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSer
 	------
 	(ndarry) periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
 	"""
-	return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, accretion_series, bad)
+	return bad.fnu_total(frequency) * normalized_flux_series_from_bad(frequency, accretion_series, bad)
 
 # -----------------------------------------------------------------------------
 def magnitude_from_flux(specific_flux, zero_point_flux):
