@@ -7,6 +7,9 @@ from .accretion import AccretionSeries, Qfit
 
 # ===================================================================
 def eccentric_anomaly(mean_anomaly, e=1.0):
+    """
+    Compute orbital eccentric anomaly from the mean anomaly by solving Kepler's equation 
+    """
     m = mean_anomaly
     f = lambda E: E - e * np.sin(E) - m
     E = root_scalar(f, x0=m, x1=m + 0.1, method='secant').root
@@ -41,7 +44,8 @@ class BinaryAlphaDisk:
         outer edge of the circumbinary disk in units of the binary semi-major axis distance
         for integrating the outer-disk spectrum
     inclination_deg (optional, default=0.0):
-        viewing inclination for the coplanar binary-disk system in degrees
+        viewing inclination for the coplanar binary-disk system in degreesm
+        0 degrees is face on; 90 degrees is edge on
     barycenter_velocity_c (optional, default=0.0):
         line-of-sight velocity of the system barycenter in units of c
     argumnet_of_pericenter (optional, default=0.0):
@@ -58,7 +62,8 @@ class BinaryAlphaDisk:
     primary_flux_ratio   : specific flux ratio of the primary's minidisk component to the total
     secondary_flux_ratio : specific flux ratio of the secondary's minidisk component to the total
     disk_flux_ratio      : specific flux ratio of the outer-disk component to the total
-        
+    lensing_boosting_magnification : magnification factor from line of sight Doppler + lensing effects
+
     """
     def __init__(self, 
                  eccentricity:float,
@@ -74,6 +79,7 @@ class BinaryAlphaDisk:
                  barycenter_velocity_c:float=0.0, 
                  argument_of_pericenter_deg:float=0.0,
                  spectral_slope_lnln:float=-1.0,
+                 geometric_dimming:int=False,
                  ):
         self.q = 1.0
         self.p = period_yr * yr2sec
@@ -94,6 +100,7 @@ class BinaryAlphaDisk:
         self.vbary = barycenter_velocity_c * c_cgs
         self.pomega = argument_of_pericenter_deg * (np.pi / 180.)
         self.alphanu = spectral_slope_lnln
+        self.geometry = np.cos(self.i) if geometric_dimming else 1.0
 
     # -------------------------------------------------------------------------
     def fnu_primary(self, nu):
@@ -146,8 +153,8 @@ class BinaryAlphaDisk:
         """
         return 1.0 - self.primary_flux_ratio(nu) - self.secondary_flux_ratio(nu)
 
-    def lensing_boosting_magnification(self, time, fs):
-        """lensing boosting 
+    def lensing_boosting_magnification_original(self, time, fs):
+        """magnification factor from line of sight lensing and Doppler boost effects
 
         fs : fraction of total light coming from the secondary
                 := 0 when all from primary
@@ -163,6 +170,7 @@ class BinaryAlphaDisk:
     
         # Convert units
         sinI = np.sin(self.i)
+        cosI = np.cos(self.i)
         t0 = 0.0
         M_1 = self.m / (1. + self.q)
         M_2 = self.q * M_1
@@ -180,9 +188,9 @@ class BinaryAlphaDisk:
         ''' Calculate line of sight velocities '''
         # Make arrays
         seconds = time * self.p
-        earr = np.full(seconds.size, e)
+        earr = np.full(seconds.size, self.ecc)
         Marr = n * (seconds - t0) # mean anomaly
-        Earr = eccentric_anomaly(Marr, earr) # Ecc anom : Need to add function somewhere
+        Earr = np.array([eccentric_anomaly(m, self.ecc) for m in Marr]) # Ecc anom : Need to add function somewhere
 
         rr = np.full(seconds.size, a) * (1. - (self.ecc * np.cos(Earr)))
         #
@@ -197,7 +205,7 @@ class BinaryAlphaDisk:
        
         X1 = r1 * ( np.cos(Omega) * np.cos(self.pomega + f) - np.sin(Omega) * np.sin(self.pomega + f) * cosI)
         Y1 = r1 * ( np.sin(Omega) * np.cos(self.pomega + f) + np.cos(Omega) * np.sin(self.pomega + f) * cosI)
-        Z1 = r1 * ( np.sin(w + f) * sinI )
+        Z1 = r1 * ( np.sin(self.pomega + f) * sinI )
 
         # Remove any points where Z1 = 0
         # TODO : a little janky -- could clean / test
@@ -234,8 +242,8 @@ class BinaryAlphaDisk:
         Dop1 = 1. / (gam1 * (1.- vr1 / c_cgs))**(3. - self.alphanu)
         Dop2 = 1. / (gam2 * (1.- vr2 / c_cgs))**(3. - self.alphanu)
 
-        for j in len(Z1):            
-            if Z1[j] > 0: 
+        for j in range(len(Z1)):
+            if Z1[j] >= 0: 
                 ##DD lensing secondary disk by primary BH
                 D_s[j] = -Z2[j] 
                 D_l[j] = -Z1[j] 
@@ -253,7 +261,7 @@ class BinaryAlphaDisk:
                 izero = np.where(Mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
                 Mlens[izero] = 1.0
                 magnification[j] = (1. - fs) * Dop1[j] + fs * Dop2[j] * Mlens[j]
-            elif Z2[j] > 0:
+            elif Z2[j] >= 0:
                 ##DD lensing primary disk
                 D_s[j] = -Z1[j]
                 D_l[j] = -Z2[j]
@@ -276,7 +284,7 @@ class BinaryAlphaDisk:
             # j = j + 1
         return magnification
 
-    def lensing_boosting_magnification_testing(self, time, fs):
+    def lensing_boosting_magnification(self, time, fs):
         """lensing boosting 
 
         time : array of times in units of orbits (typically from an AccretionSeries object)
@@ -286,17 +294,17 @@ class BinaryAlphaDisk:
                 := 1 when all from secondary
         """
         n  = 2 * np.pi / self.p
-        a  = G_cgs * self.m**(1./3.) / n**2
+        a  = (G_cgs * self.m / n**2)**(1./3.)
         m1 = self.m / (1. + self.q)
         m2 = self.q * m1
         a1 = a * m2 / self.m
         a2 = a * m1 / self.m
-        sinI = np.sin(self.i)
-        cosI = np.cos(self.i)
-        k1 = (n * a1 * sinI) / (np.sqrt(1. - self.ecc**2))
-        k2 = (n * a2 * sinI) / (np.sqrt(1. - self.ecc**2))
+        sini = np.sin(self.i)
+        cosi = np.cos(self.i)
+        k1 = (n * a1 * sini) / (np.sqrt(1. - self.ecc**2))
+        k2 = (n * a2 * sini) / (np.sqrt(1. - self.ecc**2))
         omega = np.pi / 2.
-        mean_anomalies = n * time
+        mean_anomalies = 2 * np.pi * time
         ecc_anomalies  = np.array([eccentric_anomaly(m, self.ecc) for m in mean_anomalies])
         arg = np.sqrt((1. + self.ecc) / (1. - self.ecc)) * np.tan(ecc_anomalies / 2.)
         true_anomalies = 2. * np.arctan(arg)
@@ -306,23 +314,15 @@ class BinaryAlphaDisk:
         r2 = a2 * (1. - (self.ecc * np.cos(ecc_anomalies)))
         vr1 = self.vbary + k1 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
         vr2 = self.vbary - k2 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
-        v1_sqr = np.minimum((m2 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1 - floor)
-        v2_sqr = np.minimum((m1 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1 - floor)
+        v1_sqr = np.minimum((m2 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1. - floor)
+        v2_sqr = np.minimum((m1 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1. - floor)
         gam1 = 1. / np.sqrt(1.- v1_sqr)
         gam2 = 1. / np.sqrt(1.- v2_sqr)
         dop1 = 1. / (gam1 * (1.- vr1 / c_cgs))**(3. - self.alphanu)
         dop2 = 1. / (gam2 * (1.- vr2 / c_cgs))**(3. - self.alphanu)
-        x1 = r1 * (np.cos(omega) * np.cos(self.pomega + true_anomalies) - np.sin(omega) * np.sin(self.pomega + true_anomalies) * cosI)
-        y1 = r1 * (np.sin(omega) * np.cos(self.pomega + true_anomalies) + np.cos(omega) * np.sin(self.pomega + true_anomalies) * cosI)
-        z1 = r1 * (np.sin(self.pomega + true_anomalies) * sinI)
-        # Remove any points where z1 = 0
-        # TODO : a little janky -- could clean / test
-        z1_i = np.argmin(abs(z1))
-        if z1[z1_i] == 0:
-            if z1_i != 0:
-                z1[z1_i] = z1[z1_i - 1]
-            else:
-                z1[z1_i] = z1[z1_i + 1]
+        x1 = r1 * (np.cos(omega) * np.cos(self.pomega + true_anomalies) - np.sin(omega) * np.sin(self.pomega + true_anomalies) * cosi)
+        y1 = r1 * (np.sin(omega) * np.cos(self.pomega + true_anomalies) + np.cos(omega) * np.sin(self.pomega + true_anomalies) * cosi)
+        z1 = r1 * (np.sin(self.pomega + true_anomalies) * sini)
         x2 = -1 * x1 * (m1 / m2)
         y2 = -1 * y1 * (m1 / m2)
         z2 = -1 * z1 * (m1 / m2)
@@ -332,7 +332,7 @@ class BinaryAlphaDisk:
         ml = np.zeros(x1.size)
         magnification = np.zeros(x1.size)
         for j in range(len(z1)):
-            if z1[j] > 0: 
+            if z1[j] >= 0: 
                 ##DD lensing secondary disk by primary BH
                 ds[j] = -z2[j] 
                 dl[j] = -z1[j] 
@@ -345,12 +345,12 @@ class BinaryAlphaDisk:
                 dls = ds - dl # Distance between lens and source
                 # Calculate re, theta
                 re = np.sqrt(4. * G_cgs * ml * dls / c_cgs**2)
-                u  = dydx / re
-                mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
-                izero = np.where(mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
-                mlens[izero] = 1.0
+                u  = dydx / (re + 1e-14)
+                mlens = np.nan_to_num((u**2 + 2.) / (u * np.sqrt(u**2 + 4.)), nan=1.0)
+                # izero = np.where(mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
+                # mlens[izero] = 1.0
                 magnification[j] = (1. - fs) * dop1[j] + fs * dop2[j] * mlens[j]
-            elif z2[j] > 0:
+            elif z2[j] >= 0:
                 ##DD lensing primary disk
                 ds[j] = -z1[j]
                 dl[j] = -z2[j]
@@ -363,11 +363,13 @@ class BinaryAlphaDisk:
                 dls = ds - dl # Distance between lens and source
                 # Calculate re, theta
                 re = np.sqrt(4 * G_cgs * ml * dls / c_cgs**2)
-                u  = dydx / re
-                mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
-                izero = np.where(mlens==0.0)[0]
-                mlens[izero] = 1.0
+                u  = dydx / (re + 1e-14)
+                mlens = np.nan_to_num((u**2 + 2.) / (u * np.sqrt(u**2 + 4.)), nan=1.0)
+                # izero = np.where(mlens==0.0)[0]
+                # mlens[izero] = 1.0
                 magnification[j] = (1.-fs)*dop1[j]*mlens[j] + fs*dop2[j]
+            else:
+                print('beep')
         return magnification
 
 
@@ -400,7 +402,7 @@ class BinaryAlphaDisk:
         return r * self.__bnu(nueval, r, temp_in, r_in)
 
     def __fnu_disk(self, nu, tpr_min, rpr_min, r_in, r_out, inc, dst):
-        prefac = 2.0 * np.pi * np.cos(inc) / dst**2
+        prefac = 2.0 * np.pi * self.geometry / dst**2
         return prefac * quad(self.__bnu_disk, r_in, r_out, args=(nu, tpr_min, rpr_min))[0]
 
 
@@ -624,9 +626,9 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
     chi2 = bad.secondary_flux_ratio(frequency)
     mag1 = 1.0
     mag2 = 1.0
-    if lense_boost:
-        mag1 = bad.lensing_boosting_magnification_testing(acc.time, fs=0)
-        mag2 = bad.lensing_boosting_magnification_testing(acc.time, fs=1)
+    if (lense_boost) & (bad.i != 0.0):
+        mag1 = bad.lensing_boosting_magnification(acc.time, fs=0)
+        mag2 = bad.lensing_boosting_magnification(acc.time, fs=1)
     disk_flux = 1.0 - chi1 - chi2
     mdot_mean = np.mean(acc.total)
     return chi1 * acc.primary / mdot_mean * mag1 + chi2 * acc.secondary / mdot_mean * mag2 + disk_flux
@@ -686,7 +688,7 @@ if __name__ == '__main__':
         acc = AccretionSeries(x, n_modes=29, n_orbits=3, retrograde=False)
         bad = BinaryAlphaDisk(x, p_yr, m_msun, dl_pc, eddington_ratio=fedd)
         yrs = time_from_bad(acc, bad)
-        flux = periodic_flux_series_from_bad(vband_nu, acc, bad, lense_boost=True)
+        flux = periodic_flux_series_from_bad(vband_nu, acc, bad)
         ax1.plot(yrs, flux, 'C0-')
         ax2.plot(yrs, magnitude_from_flux(flux, vband_fnu0), 'k--')
         ax2.set_xlim([0.0, yrs[-1]])
