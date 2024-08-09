@@ -118,7 +118,7 @@ class AccretionSeries:
 		"""
 		Gives a timeseries of the orbits associated to a signal of equivalent n_orbits
 	
-		: return : (ndarray) number of orbits for accretion rate/luminosity timeseries
+		: return : (ndarray) time in units of orbits for accretion rate/luminosity timeseries
 		"""
 		xlong = []
 		for n in range(self.repeats):

@@ -1,7 +1,16 @@
 import numpy as np
 from scipy.integrate import quad
+from scipy.optimize import root_scalar
 from .constants import *
 from .accretion import AccretionSeries, Qfit
+
+
+# ===================================================================
+def eccentric_anomaly(mean_anomaly, e=1.0):
+    m = mean_anomaly
+    f = lambda E: E - e * np.sin(E) - m
+    E = root_scalar(f, x0=m, x1=m + 0.1, method='secant').root
+    return E
 
 
 # ===================================================================
@@ -33,7 +42,7 @@ class BinaryAlphaDisk:
         for integrating the outer-disk spectrum
     inclination_deg (optional, default=0.0):
         viewing inclination for the coplanar binary-disk system in degrees
-    barycenter_velocity (optional, default=0.0):
+    barycenter_velocity_c (optional, default=0.0):
         line-of-sight velocity of the system barycenter in units of c
     argumnet_of_pericenter (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
@@ -82,8 +91,8 @@ class BinaryAlphaDisk:
         self.rin_cbd  = cbd_inner_edge_a * self.a
         self.rout_cbd = cbd_outer_edge_a * self.a
         self.temp1 = self.__disk_temperature_r(self.m1, self.dm1, self.rin_md)
-        self.vbary = barycenter_velocity * c_cgs
-        self.pomega = argumnet_of_pericenter_deg * (np.pi / 180.)
+        self.vbary = barycenter_velocity_c * c_cgs
+        self.pomega = argument_of_pericenter_deg * (np.pi / 180.)
         self.alphanu = spectral_slope_lnln
 
     # -------------------------------------------------------------------------
@@ -137,12 +146,12 @@ class BinaryAlphaDisk:
         """
         return 1.0 - self.primary_flux_ratio(nu) - self.secondary_flux_ratio(nu)
 
-    def lensing_boosting_magnification(self, fs):
+    def lensing_boosting_magnification(self, time, fs):
         """lensing boosting 
 
         fs : fraction of total light coming from the secondary
-                == 0 when all from primary
-                == 1 when all from secondary
+                := 0 when all from primary
+                := 1 when all from secondary
         """
         # Units: 
         # t: seconds
@@ -170,7 +179,7 @@ class BinaryAlphaDisk:
         
         ''' Calculate line of sight velocities '''
         # Make arrays
-        seconds = t 
+        seconds = time * self.p
         earr = np.full(seconds.size, e)
         Marr = n * (seconds - t0) # mean anomaly
         Earr = eccentric_anomaly(Marr, earr) # Ecc anom : Need to add function somewhere
@@ -267,6 +276,101 @@ class BinaryAlphaDisk:
             # j = j + 1
         return magnification
 
+    def lensing_boosting_magnification_testing(self, time, fs):
+        """lensing boosting 
+
+        time : array of times in units of orbits (typically from an AccretionSeries object)
+
+        fs : fraction of total light coming from the secondary
+                := 0 when all from primary
+                := 1 when all from secondary
+        """
+        n  = 2 * np.pi / self.p
+        a  = G_cgs * self.m**(1./3.) / n**2
+        m1 = self.m / (1. + self.q)
+        m2 = self.q * m1
+        a1 = a * m2 / self.m
+        a2 = a * m1 / self.m
+        sinI = np.sin(self.i)
+        cosI = np.cos(self.i)
+        k1 = (n * a1 * sinI) / (np.sqrt(1. - self.ecc**2))
+        k2 = (n * a2 * sinI) / (np.sqrt(1. - self.ecc**2))
+        omega = np.pi / 2.
+        mean_anomalies = n * time
+        ecc_anomalies  = np.array([eccentric_anomaly(m, self.ecc) for m in mean_anomalies])
+        arg = np.sqrt((1. + self.ecc) / (1. - self.ecc)) * np.tan(ecc_anomalies / 2.)
+        true_anomalies = 2. * np.arctan(arg)
+        floor = 1e-10
+        r  = a  * (1. - (self.ecc * np.cos(ecc_anomalies)))
+        r1 = a1 * (1. - (self.ecc * np.cos(ecc_anomalies)))
+        r2 = a2 * (1. - (self.ecc * np.cos(ecc_anomalies)))
+        vr1 = self.vbary + k1 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
+        vr2 = self.vbary - k2 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
+        v1_sqr = np.minimum((m2 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1 - floor)
+        v2_sqr = np.minimum((m1 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1 - floor)
+        gam1 = 1. / np.sqrt(1.- v1_sqr)
+        gam2 = 1. / np.sqrt(1.- v2_sqr)
+        dop1 = 1. / (gam1 * (1.- vr1 / c_cgs))**(3. - self.alphanu)
+        dop2 = 1. / (gam2 * (1.- vr2 / c_cgs))**(3. - self.alphanu)
+        x1 = r1 * (np.cos(omega) * np.cos(self.pomega + true_anomalies) - np.sin(omega) * np.sin(self.pomega + true_anomalies) * cosI)
+        y1 = r1 * (np.sin(omega) * np.cos(self.pomega + true_anomalies) + np.cos(omega) * np.sin(self.pomega + true_anomalies) * cosI)
+        z1 = r1 * (np.sin(self.pomega + true_anomalies) * sinI)
+        # Remove any points where z1 = 0
+        # TODO : a little janky -- could clean / test
+        z1_i = np.argmin(abs(z1))
+        if z1[z1_i] == 0:
+            if z1_i != 0:
+                z1[z1_i] = z1[z1_i - 1]
+            else:
+                z1[z1_i] = z1[z1_i + 1]
+        x2 = -1 * x1 * (m1 / m2)
+        y2 = -1 * y1 * (m1 / m2)
+        z2 = -1 * z1 * (m1 / m2)
+        ds = np.zeros(x1.size)
+        dl = np.zeros(x1.size)
+        ms = np.zeros(x1.size)
+        ml = np.zeros(x1.size)
+        magnification = np.zeros(x1.size)
+        for j in range(len(z1)):
+            if z1[j] > 0: 
+                ##DD lensing secondary disk by primary BH
+                ds[j] = -z2[j] 
+                dl[j] = -z1[j] 
+                ms[j] = m2
+                ml[j] = m1
+                # Calculate angle between lens and source
+                dy = np.abs(y1 - y2)
+                dx = np.abs(x1 - x2)
+                dydx = np.sqrt(dx**2 + dy**2)
+                dls = ds - dl # Distance between lens and source
+                # Calculate re, theta
+                re = np.sqrt(4. * G_cgs * ml * dls / c_cgs**2)
+                u  = dydx / re
+                mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
+                izero = np.where(mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
+                mlens[izero] = 1.0
+                magnification[j] = (1. - fs) * dop1[j] + fs * dop2[j] * mlens[j]
+            elif z2[j] > 0:
+                ##DD lensing primary disk
+                ds[j] = -z1[j]
+                dl[j] = -z2[j]
+                ms[j] = m1
+                ml[j] = m2
+                # Calculate angle between lens and source
+                dy = np.abs(y1 - y2)
+                dx = np.abs(x1 - x2)
+                dydx = np.sqrt(dx**2 + dy**2)
+                dls = ds - dl # Distance between lens and source
+                # Calculate re, theta
+                re = np.sqrt(4 * G_cgs * ml * dls / c_cgs**2)
+                u  = dydx / re
+                mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
+                izero = np.where(mlens==0.0)[0]
+                mlens[izero] = 1.0
+                magnification[j] = (1.-fs)*dop1[j]*mlens[j] + fs*dop2[j]
+        return magnification
+
+
     # Internal methods
     # -------------------------------------------------------------------------
     def __eddington_luminosity(self, m):
@@ -336,6 +440,7 @@ def normalized_flux_series(frequency:float,
                            barycenter_velocity_c:float=0.0, 
                            argument_of_pericenter_deg:float=0.0,
                            spectral_slope_lnln:float=-1.0,
+                           lense_boost=False,
                           ):
     """Generate a periodic flux timeseries at given frequency normalized to the total averaged (in the rest frame) flux
 
@@ -369,10 +474,12 @@ def normalized_flux_series(frequency:float,
         viewing inclination for the coplanar binary-disk system in degrees
     barycenter_velocity_c (optional, default=0.0):
         line-of-sight velocity of the system barycenter in units of c
-    argumnet_of_pericenter_deg (optional, default=0.0):
+    argument_of_pericenter_deg (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
+    lense_boost (optional, default=False):
+        flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
@@ -393,7 +500,7 @@ def normalized_flux_series(frequency:float,
                           argument_of_pericenter_deg,
                           spectral_slope_lnln,
                         )
-    return normazlied_flux_series_from_bad(frequency, acc, bad)
+    return normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
 
 def periodic_flux_series(frequency:float, 
                          accretion_series:AccretionSeries, 
@@ -409,6 +516,7 @@ def periodic_flux_series(frequency:float,
                          barycenter_velocity_c:float=0.0, 
                          argument_of_pericenter_deg:float=0.0,
                          spectral_slope_lnln:float=-1.0,
+                         lense_boost=False,
                         ):
     """Generate a periodic flux timeseries at given frequency
 
@@ -442,10 +550,12 @@ def periodic_flux_series(frequency:float,
         viewing inclination for the coplanar binary-disk system in degrees
     barycenter_velocity_c (optional, default=0.0):
         line-of-sight velocity of the system barycenter in units of c
-    argumnet_of_pericenter_deg (optional, default=0.0):
+    argument_of_pericenter_deg (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
+    lense_boost (optional, default=False):
+        flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
@@ -466,7 +576,7 @@ def periodic_flux_series(frequency:float,
                           argument_of_pericenter_deg,
                           spectral_slope_lnln,
                         )
-    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad)
+    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
 
 # -----------------------------------------------------------------------------
 def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
@@ -479,6 +589,9 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
          - holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
+
+    lense_boost (optional, default=False):
+        flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
@@ -499,6 +612,9 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
     bad:
         a BinaryAlphaDisk object containing desired system specifics
 
+    lense_boost (optional, default=False):
+        flag to include Doppler boosting and lensing magnifications
+
     Return
     ------
     (ndarry) normalized periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
@@ -509,8 +625,8 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
     mag1 = 1.0
     mag2 = 1.0
     if lense_boost:
-        mag1 = bad.lensing_boosting_magnification(fs=0)
-        mag2 = bad.lensing_boosting_magnification(fs=1)
+        mag1 = bad.lensing_boosting_magnification_testing(acc.time, fs=0)
+        mag2 = bad.lensing_boosting_magnification_testing(acc.time, fs=1)
     disk_flux = 1.0 - chi1 - chi2
     mdot_mean = np.mean(acc.total)
     return chi1 * acc.primary / mdot_mean * mag1 + chi2 * acc.secondary / mdot_mean * mag2 + disk_flux
@@ -570,7 +686,7 @@ if __name__ == '__main__':
         acc = AccretionSeries(x, n_modes=29, n_orbits=3, retrograde=False)
         bad = BinaryAlphaDisk(x, p_yr, m_msun, dl_pc, eddington_ratio=fedd)
         yrs = time_from_bad(acc, bad)
-        flux = periodic_flux_series_from_bad(vband_nu, acc, bad)
+        flux = periodic_flux_series_from_bad(vband_nu, acc, bad, lense_boost=True)
         ax1.plot(yrs, flux, 'C0-')
         ax2.plot(yrs, magnitude_from_flux(flux, vband_fnu0), 'k--')
         ax2.set_xlim([0.0, yrs[-1]])
