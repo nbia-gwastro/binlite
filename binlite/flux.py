@@ -332,7 +332,10 @@ def normalized_flux_series(frequency:float,
                            md_inner_edge_risco:float=1.0,
                            cbd_inner_edge_a:float=2.0,
                            cbd_outer_edge_a:float=100.0,
-                           inclination:float=0.0,
+                           inclination_deg:float=0.0,
+                           barycenter_velocity_c:float=0.0, 
+                           argument_of_pericenter_deg:float=0.0,
+                           spectral_slope_lnln:float=-1.0,
                           ):
     """Generate a periodic flux timeseries at given frequency normalized to the total averaged (in the rest frame) flux
 
@@ -364,18 +367,33 @@ def normalized_flux_series(frequency:float,
         for integrating the outer-disk spectrum
     inclination_deg (optional, default=0.0):
         viewing inclination for the coplanar binary-disk system in degrees
+    barycenter_velocity_c (optional, default=0.0):
+        line-of-sight velocity of the system barycenter in units of c
+    argumnet_of_pericenter_deg (optional, default=0.0):
+        argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
+    spectral_slope_lnln (optional, default=-1.0):
+        dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
 
     Return
     ------
     (ndarry) normalized periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
     """
     acc = accretion_series
-    bad = BinaryAlphaDisk(acc.ecc, period, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
-    chi1 = bad.primary_flux_ratio(frequency)
-    chi2 = bad.secondary_flux_ratio(frequency)
-    disk_flux = 1.0 - chi1 - ch2
-    mdot_mean = np.mean(acc.total)
-    return chi1 * acc.primary / mdot_mean + chi2 * acc.secondary / mdot_mean + disk_flux
+    bad = BinaryAlphaDisk(acc.ecc, 
+                          period, 
+                          total_mass_msun, 
+                          luminosity_distance_pc, 
+                          eddington_ratio, 
+                          accretion_efficiency, 
+                          md_inner_edge_risco, 
+                          cbd_inner_edge_a, 
+                          cbd_outer_edge_a, 
+                          inclination_deg,
+                          barycenter_velocity_c, 
+                          argument_of_pericenter_deg,
+                          spectral_slope_lnln,
+                        )
+    return normazlied_flux_series_from_bad(frequency, acc, bad)
 
 def periodic_flux_series(frequency:float, 
                          accretion_series:AccretionSeries, 
@@ -387,7 +405,10 @@ def periodic_flux_series(frequency:float,
                          md_inner_edge_risco:float=1.0,
                          cbd_inner_edge_a:float=2.0,
                          cbd_outer_edge_a:float=100.0,
-                         inclination:float=0.0,
+                         inclination_deg:float=0.0,
+                         barycenter_velocity_c:float=0.0, 
+                         argument_of_pericenter_deg:float=0.0,
+                         spectral_slope_lnln:float=-1.0,
                         ):
     """Generate a periodic flux timeseries at given frequency
 
@@ -417,16 +438,35 @@ def periodic_flux_series(frequency:float,
     cbd_outer_edge_a (optional, default=100.0):
         outer edge of the circumbinary disk in units of the binary semi-major axis distance
         for integrating the outer-disk spectrum
-    inclination_deg (optional, default=0.0):
+    inclination_deg_deg (optional, default=0.0):
         viewing inclination for the coplanar binary-disk system in degrees
+    barycenter_velocity_c (optional, default=0.0):
+        line-of-sight velocity of the system barycenter in units of c
+    argumnet_of_pericenter_deg (optional, default=0.0):
+        argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
+    spectral_slope_lnln (optional, default=-1.0):
+        dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
 
     Return
     ------
     (ndarry) periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
     """
     acc = accretion_series
-    bad = BinaryAlphaDisk(acc.ecc, period, total_mass_msun, luminosity_distance_pc, eddington_ratio, accretion_efficiency, md_inner_edge_risco, cbd_inner_edge_a, cbd_outer_edge_a, inclination)
-    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, ts, bad)
+    bad = BinaryAlphaDisk(acc.ecc, 
+                          period, 
+                          total_mass_msun, 
+                          luminosity_distance_pc, 
+                          eddington_ratio, 
+                          accretion_efficiency, 
+                          md_inner_edge_risco, 
+                          cbd_inner_edge_a, 
+                          cbd_outer_edge_a, 
+                          inclination_deg,
+                          barycenter_velocity_c, 
+                          argument_of_pericenter_deg,
+                          spectral_slope_lnln,
+                        )
+    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad)
 
 # -----------------------------------------------------------------------------
 def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
