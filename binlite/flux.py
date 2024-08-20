@@ -52,6 +52,9 @@ class BinaryAlphaDisk:
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
+    geometric_dimming (optional, default=False):
+        include dimming due to the geometrical projection associated with inclination i
+        - set to True for standard blackbody disk
 
     Public methods
     --------------
@@ -153,139 +156,8 @@ class BinaryAlphaDisk:
         """
         return 1.0 - self.primary_flux_ratio(nu) - self.secondary_flux_ratio(nu)
 
-    def lensing_boosting_magnification_original(self, time, fs):
-        """magnification factor from line of sight lensing and Doppler boost effects
-
-        fs : fraction of total light coming from the secondary
-                := 0 when all from primary
-                := 1 when all from secondary
-        """
-        # Units: 
-        # t: seconds
-        # vz: v/c (3e8 m/s)
-        # w, Omega, I: rad
-        # e, alpha: unitless
-        # T, t0: years
-        # M_1, M_2: solar masses e8
-    
-        # Convert units
-        sinI = np.sin(self.i)
-        cosI = np.cos(self.i)
-        t0 = 0.0
-        M_1 = self.m / (1. + self.q)
-        M_2 = self.q * M_1
-            
-        # More constants
-        Omega = np.pi / 2. # doesn't matter
-        n = 2 * np.pi / self.p
-        
-        a = ((self.p / (2 * np.pi))**2 * G_cgs * (M_1 + M_2))**(1./3.)
-        a1 = a * M_2 / (M_1 + M_2)
-        a2 = a * M_1 / (M_1 + M_2)
-        K1 = (n * a1 * sinI) / (np.sqrt(1. - self.ecc**2))
-        K2 = (n * a2 * sinI) / (np.sqrt(1. - self.ecc**2))
-        
-        ''' Calculate line of sight velocities '''
-        # Make arrays
-        seconds = time * self.p
-        earr = np.full(seconds.size, self.ecc)
-        Marr = n * (seconds - t0) # mean anomaly
-        Earr = np.array([eccentric_anomaly(m, self.ecc) for m in Marr]) # Ecc anom : Need to add function somewhere
-
-        rr = np.full(seconds.size, a) * (1. - (self.ecc * np.cos(Earr)))
-        #
-        r1 = np.full(seconds.size, a1) * (1. - (self.ecc * np.cos(Earr)))
-        r2 = np.full(seconds.size, a2) * (1. - (self.ecc * np.cos(Earr)))
-                
-        arg = np.sqrt((1. + earr) / (1. - earr)) * np.tan(Earr / 2.)
-        f = 2. * np.arctan(arg) # true anomaly
-              
-        vr1 = self.vbary + K1 * (np.cos(self.pomega + f) + earr * np.cos(self.pomega))
-        vr2 = self.vbary - K2 * (np.cos(self.pomega + f) + earr * np.cos(self.pomega))
-       
-        X1 = r1 * ( np.cos(Omega) * np.cos(self.pomega + f) - np.sin(Omega) * np.sin(self.pomega + f) * cosI)
-        Y1 = r1 * ( np.sin(Omega) * np.cos(self.pomega + f) + np.cos(Omega) * np.sin(self.pomega + f) * cosI)
-        Z1 = r1 * ( np.sin(self.pomega + f) * sinI )
-
-        # Remove any points where Z1 = 0
-        # TODO : a little janky -- could clean / test
-        Z1_i = np.argmin(abs(Z1))
-        if Z1[Z1_i] == 0:
-            if Z1_i != 0:
-                Z1[Z1_i] = Z1[Z1_i - 1]
-            else:
-                Z1[Z1_i] = Z1[Z1_i + 1]
-            
-        # m2
-        X2 = -1 * X1 * (M_1 / M_2)
-        Y2 = -1 * Y1 * (M_1 / M_2)
-        Z2 = -1 * Z1 * (M_1 / M_2)
-                
-        D_s = np.zeros(X1.size)
-        D_l = np.zeros(X1.size)
-        M_s = np.zeros(X1.size)
-        M_l = np.zeros(X1.size)
-        magnification = np.zeros(X1.size)
-
-        ## make sure the (v/c)^2 isnt to close to 1 and makes gam a nan [might be very rare]
-        #vorb1_sqr = np.minimum(  G_SI*(M_1 + M_2)*Msun_SI *(2./(r1) - 1./a1) /cc/cc,  0.9999999999)
-        #vorb2_sqr = np.minimum(  G_SI*(M_1 + M_2)*Msun_SI *(2./(r2) - 1./a2) /cc/cc , 0.9999999999)
-        #DD May 2022
-
-        # TODO 0.99999 --> 1. - 1e-10?
-        vorb1_sqr = np.minimum( (M_2 / (M_1 + M_2))**2 * G_cgs * (M_1 + M_2) * (2./(rr) - 1./a) / c_cgs / c_cgs, 0.9999999999)
-        vorb2_sqr = np.minimum( (M_1 / (M_1 + M_2))**2 * G_cgs * (M_1 + M_2) * (2./(rr) - 1./a) / c_cgs / c_cgs, 0.9999999999)
-        gam1 = 1. / np.sqrt(1.- (vorb1_sqr))
-        gam2 = 1. / np.sqrt(1.- (vorb2_sqr))
-        
-        ## FULL DOPPLER FACTOR
-        Dop1 = 1. / (gam1 * (1.- vr1 / c_cgs))**(3. - self.alphanu)
-        Dop2 = 1. / (gam2 * (1.- vr2 / c_cgs))**(3. - self.alphanu)
-
-        for j in range(len(Z1)):
-            if Z1[j] >= 0: 
-                ##DD lensing secondary disk by primary BH
-                D_s[j] = -Z2[j] 
-                D_l[j] = -Z1[j] 
-                M_s[j] = M_2
-                M_l[j] = M_1
-                # Calculate angle between lens and source
-                dy = np.abs(Y1 - Y2)
-                dx = np.abs(X1 - X2)
-                dydx = np.sqrt(dx**2 + dy**2)
-                D_ls = D_s - D_l # Distance between lens and source
-                # Calculate r_E, theta
-                r_E = np.sqrt(4. * G_cgs * M_l * D_ls / c_cgs**2)
-                u = dydx / r_E
-                Mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
-                izero = np.where(Mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
-                Mlens[izero] = 1.0
-                magnification[j] = (1. - fs) * Dop1[j] + fs * Dop2[j] * Mlens[j]
-            elif Z2[j] >= 0:
-                ##DD lensing primary disk
-                D_s[j] = -Z1[j]
-                D_l[j] = -Z2[j]
-                M_s[j] = M_1
-                M_l[j] = M_2
-                # Calculate angle between lens and source
-                dy = np.abs(Y1 - Y2)
-                dx = np.abs(X1 - X2)
-                dydx = np.sqrt(dx**2 + dy**2)
-                D_ls = D_s - D_l # Distance between lens and source
-                # Calculate r_E, theta
-                r_E = np.sqrt(4 * G_cgs * M_l * D_ls / c_cgs**2)
-                u = dydx / r_E
-                Mlens = np.nan_to_num( (u**2 + 2.) / (u * np.sqrt(u**2 + 4.)) )
-                izero = np.where(Mlens==0.0)[0]
-                Mlens[izero] = 1.0
-                magnification[j] = (1.-fs)*Dop1[j]*Mlens[j] + fs*Dop2[j]
-            else:
-                print('\007') 
-            # j = j + 1
-        return magnification
-
     def lensing_boosting_magnification(self, time, fs):
-        """lensing boosting 
+        """calculate magnification factor from lensing+boosting effects
 
         time : array of times in units of orbits (typically from an AccretionSeries object)
 
@@ -308,70 +180,40 @@ class BinaryAlphaDisk:
         ecc_anomalies  = np.array([eccentric_anomaly(m, self.ecc) for m in mean_anomalies])
         arg = np.sqrt((1. + self.ecc) / (1. - self.ecc)) * np.tan(ecc_anomalies / 2.)
         true_anomalies = 2. * np.arctan(arg)
+        fkep  = 1. - (self.ecc * np.cos(ecc_anomalies))
         floor = 1e-10
-        r  = a  * (1. - (self.ecc * np.cos(ecc_anomalies)))
-        r1 = a1 * (1. - (self.ecc * np.cos(ecc_anomalies)))
-        r2 = a2 * (1. - (self.ecc * np.cos(ecc_anomalies)))
+        r  = a  * fkep
+        r1 = a1 * fkep
+        r2 = a2 * fkep
         vr1 = self.vbary + k1 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
         vr2 = self.vbary - k2 * (np.cos(self.pomega + true_anomalies) + self.ecc * np.cos(self.pomega))
         v1_sqr = np.minimum((m2 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1. - floor)
         v2_sqr = np.minimum((m1 / self.m)**2 * G_cgs * self.m * (2. / r - 1. / a) / c_cgs**2, 1. - floor)
-        gam1 = 1. / np.sqrt(1.- v1_sqr)
-        gam2 = 1. / np.sqrt(1.- v2_sqr)
-        dop1 = 1. / (gam1 * (1.- vr1 / c_cgs))**(3. - self.alphanu)
-        dop2 = 1. / (gam2 * (1.- vr2 / c_cgs))**(3. - self.alphanu)
+        gam1 = 1. /  np.sqrt(1. - v1_sqr)
+        gam2 = 1. /  np.sqrt(1. - v2_sqr)
+        dop1 = 1. / (gam1 * (1. - vr1 / c_cgs))**(3. - self.alphanu)
+        dop2 = 1. / (gam2 * (1. - vr2 / c_cgs))**(3. - self.alphanu)
         x1 = r1 * (np.cos(omega) * np.cos(self.pomega + true_anomalies) - np.sin(omega) * np.sin(self.pomega + true_anomalies) * cosi)
         y1 = r1 * (np.sin(omega) * np.cos(self.pomega + true_anomalies) + np.cos(omega) * np.sin(self.pomega + true_anomalies) * cosi)
         z1 = r1 * (np.sin(self.pomega + true_anomalies) * sini)
         x2 = -1 * x1 * (m1 / m2)
         y2 = -1 * y1 * (m1 / m2)
         z2 = -1 * z1 * (m1 / m2)
-        ds = np.zeros(x1.size)
-        dl = np.zeros(x1.size)
-        ms = np.zeros(x1.size)
-        ml = np.zeros(x1.size)
-        magnification = np.zeros(x1.size)
-        for j in range(len(z1)):
-            if z1[j] >= 0: 
-                ##DD lensing secondary disk by primary BH
-                ds[j] = -z2[j] 
-                dl[j] = -z1[j] 
-                ms[j] = m2
-                ml[j] = m1
-                # Calculate angle between lens and source
-                dy = np.abs(y1 - y2)
-                dx = np.abs(x1 - x2)
-                dydx = np.sqrt(dx**2 + dy**2)
-                dls = ds - dl # Distance between lens and source
-                # Calculate re, theta
-                re = np.sqrt(4. * G_cgs * ml * dls / c_cgs**2)
-                u  = dydx / (re + 1e-14)
-                mlens = np.nan_to_num((u**2 + 2.) / (u * np.sqrt(u**2 + 4.)), nan=1.0)
-                # izero = np.where(mlens==0.0)[0] ##nan_to_num turns nans and infs into 0.0, so make these 1.0
-                # mlens[izero] = 1.0
-                magnification[j] = (1. - fs) * dop1[j] + fs * dop2[j] * mlens[j]
-            elif z2[j] >= 0:
-                ##DD lensing primary disk
-                ds[j] = -z1[j]
-                dl[j] = -z2[j]
-                ms[j] = m1
-                ml[j] = m2
-                # Calculate angle between lens and source
-                dy = np.abs(y1 - y2)
-                dx = np.abs(x1 - x2)
-                dydx = np.sqrt(dx**2 + dy**2)
-                dls = ds - dl # Distance between lens and source
-                # Calculate re, theta
-                re = np.sqrt(4 * G_cgs * ml * dls / c_cgs**2)
-                u  = dydx / (re + 1e-14)
-                mlens = np.nan_to_num((u**2 + 2.) / (u * np.sqrt(u**2 + 4.)), nan=1.0)
-                # izero = np.where(mlens==0.0)[0]
-                # mlens[izero] = 1.0
-                magnification[j] = (1.-fs)*dop1[j]*mlens[j] + fs*dop2[j]
-            else:
-                print('beep')
+        ml = np.full(z1.shape, m1)
+        dl = -z1
+        ds = -z2
+        flip = (z1 < 0)
+        ml[flip] =  m2
+        dl[flip] = -z2[flip]
+        ds[flip] = -z1[flip]
+        dl = ds - dl
+        dr = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        re = np.sqrt(4 * G_cgs * ml * dl / c_cgs**2)
+        u  = dr / (re + 1e-14)
+        mlens = (u**2 + 2.) / (u * np.sqrt(u**2 + 4.))
+        magnification = (1 - fs) * dop1 + fs * dop2 * mlens
+        magnification[flip] = (1 - fs) * dop1[flip] * mlens[flip] + fs * dop2[flip]
         return magnification
-
 
     # Internal methods
     # -------------------------------------------------------------------------
@@ -442,6 +284,7 @@ def normalized_flux_series(frequency:float,
                            barycenter_velocity_c:float=0.0, 
                            argument_of_pericenter_deg:float=0.0,
                            spectral_slope_lnln:float=-1.0,
+                           geometric_dimming:int=False,
                            lense_boost=False,
                           ):
     """Generate a periodic flux timeseries at given frequency normalized to the total averaged (in the rest frame) flux
@@ -480,6 +323,8 @@ def normalized_flux_series(frequency:float,
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
+    geometric_dimming (optional, default=False):
+        include dimming due to the geometrical projection associated with inclination i
     lense_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -501,6 +346,7 @@ def normalized_flux_series(frequency:float,
                           barycenter_velocity_c, 
                           argument_of_pericenter_deg,
                           spectral_slope_lnln,
+                          geometric_dimming,
                         )
     return normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
 
@@ -518,6 +364,7 @@ def periodic_flux_series(frequency:float,
                          barycenter_velocity_c:float=0.0, 
                          argument_of_pericenter_deg:float=0.0,
                          spectral_slope_lnln:float=-1.0,
+                         geometric_dimming:int=False,
                          lense_boost=False,
                         ):
     """Generate a periodic flux timeseries at given frequency
@@ -556,6 +403,8 @@ def periodic_flux_series(frequency:float,
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
+    geometric_dimming (optional, default=False):
+        include dimming due to the geometrical projection associated with inclination i
     lense_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -577,6 +426,7 @@ def periodic_flux_series(frequency:float,
                           barycenter_velocity_c, 
                           argument_of_pericenter_deg,
                           spectral_slope_lnln,
+                          geometric_dimming,
                         )
     return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
 
@@ -613,7 +463,6 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
          - holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
-
     lense_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -645,6 +494,8 @@ def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSer
          - holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
+    lense_boost (optional, default=False):
+        flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
