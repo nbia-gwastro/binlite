@@ -62,7 +62,9 @@ Similarly, users have acces to two means of creating an associated flux timeseri
 	fnu_normal = blt.flux.normalized_flux_series_from_bad(frequency, acc, bad)
 	```
 
-The flux module also contains a convenience function `magnitude_from_flux` which converts a flux timeseries into a timeseries of apparent magnitudes. The function takes as input any flux series at some frequency and the associated zero-point flux for that observing band: `blt.flux.magnitude_from_flux(fnu_series, zero_point_flux)`
+`BinaryAlphaDisk` objects also contain information on the system barycenter velocity, orbital orientation, and emission spectral slope for superimposing lensing plus Doppler effects onto a given flux series. Each function for generating a flux series additionally posseses the optional argument `lens_boost` to include lensing plus Doppler boosts: e.g. `fnu_series = blt.flux.periodic_flux_series_from_bad(frequency, acc, bad, lens_boost=True)`.
+
+The flux module also contains a convenience function `magnitude_from_flux` which converts a flux timeseries into a timeseries of apparent magnitudes. The function takes as input any flux series at some frequency and the associated zero-point flux for that observing band: `blt.flux.magnitude_from_flux(fnu_series, zero_point_flux)`.
 
 The calculations for generating flux timeseries assume that the outer-disk and each minidisk are described by independent Shakura-Sunyaev alpha-disk solutions. See the associated paper D'Orazio, Duffell & Tiede (2024) for more detail.
 
