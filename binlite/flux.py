@@ -47,7 +47,7 @@ class BinaryAlphaDisk:
         viewing inclination for the coplanar binary-disk system in degreesm
         0 degrees is face on; 90 degrees is edge on
     barycenter_velocity_c (optional, default=0.0):
-        line-of-sight velocity of the system barycenter in units of c
+        line-of-sight velocity of the system barycenter in units of c (speed of light)
     argumnet_of_pericenter (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
@@ -334,7 +334,7 @@ def normalized_flux_series(frequency:float,
     """
     acc = accretion_series
     bad = BinaryAlphaDisk(acc.ecc, 
-                          period, 
+                          period_yr, 
                           total_mass_msun, 
                           luminosity_distance_pc, 
                           eddington_ratio, 
@@ -414,7 +414,7 @@ def periodic_flux_series(frequency:float,
     """
     acc = accretion_series
     bad = BinaryAlphaDisk(acc.ecc, 
-                          period, 
+                          period_yr, 
                           total_mass_msun, 
                           luminosity_distance_pc, 
                           eddington_ratio, 
