@@ -285,7 +285,7 @@ def normalized_flux_series(frequency:float,
                            argument_of_pericenter_deg:float=0.0,
                            spectral_slope_lnln:float=-1.0,
                            geometric_dimming:int=False,
-                           lense_boost=False,
+                           lens_boost=False,
                           ):
     """Generate a periodic flux timeseries at given frequency normalized to the total averaged (in the rest frame) flux
 
@@ -325,7 +325,7 @@ def normalized_flux_series(frequency:float,
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
     geometric_dimming (optional, default=False):
         include dimming due to the geometrical projection associated with inclination i
-    lense_boost (optional, default=False):
+    lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
     Return
@@ -348,7 +348,7 @@ def normalized_flux_series(frequency:float,
                           spectral_slope_lnln,
                           geometric_dimming,
                         )
-    return normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
+    return normazlied_flux_series_from_bad(frequency, acc, bad, lens_boost=lens_boost)
 
 def periodic_flux_series(frequency:float, 
                          accretion_series:AccretionSeries, 
@@ -365,7 +365,7 @@ def periodic_flux_series(frequency:float,
                          argument_of_pericenter_deg:float=0.0,
                          spectral_slope_lnln:float=-1.0,
                          geometric_dimming:int=False,
-                         lense_boost=False,
+                         lens_boost=False,
                         ):
     """Generate a periodic flux timeseries at given frequency
 
@@ -405,7 +405,7 @@ def periodic_flux_series(frequency:float,
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
     geometric_dimming (optional, default=False):
         include dimming due to the geometrical projection associated with inclination i
-    lense_boost (optional, default=False):
+    lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
     Return
@@ -428,7 +428,7 @@ def periodic_flux_series(frequency:float,
                           spectral_slope_lnln,
                           geometric_dimming,
                         )
-    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad, lense_boost=lense_boost)
+    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, acc, bad, lens_boost=lens_boost)
 
 # -----------------------------------------------------------------------------
 def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
@@ -442,7 +442,7 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
     bad:
         a BinaryAlphaDisk object containing desired system specifics
 
-    lense_boost (optional, default=False):
+    lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
     Return
@@ -451,7 +451,7 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
     """
     return time(accretion_series, bad.p / yr2sec)
 
-def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk, lense_boost=False):
+def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk, lens_boost=False):
     """Generate a normalized periodic flux timeseries at given frequency from a BinaryAlphaDisk object
 
     Parameters
@@ -463,7 +463,7 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
          - holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
-    lense_boost (optional, default=False):
+    lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
     Return
@@ -475,14 +475,14 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
     chi2 = bad.secondary_flux_ratio(frequency)
     mag1 = 1.0
     mag2 = 1.0
-    if (lense_boost) & (bad.i != 0.0):
+    if (lens_boost) & (bad.i != 0.0):
         mag1 = bad.lensing_boosting_magnification(acc.time, fs=0)
         mag2 = bad.lensing_boosting_magnification(acc.time, fs=1)
     disk_flux = 1.0 - chi1 - chi2
     mdot_mean = np.mean(acc.total)
     return chi1 * acc.primary / mdot_mean * mag1 + chi2 * acc.secondary / mdot_mean * mag2 + disk_flux
 
-def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk, lense_boost=False):
+def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSeries, bad:BinaryAlphaDisk, lens_boost=False):
     """Generate a periodic flux timeseries at given frequency from a BinaryAlphaDisk object
 
     Parameters
@@ -494,14 +494,14 @@ def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSer
          - holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
-    lense_boost (optional, default=False):
+    lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
     (ndarry) periodic flux timeseries with same shape as accretion_series.primary/secondary/total in cgs
     """
-    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, accretion_series, bad, lense_boost=lense_boost)
+    return bad.fnu_total(frequency) * normazlied_flux_series_from_bad(frequency, accretion_series, bad, lens_boost=lens_boost)
 
 # -----------------------------------------------------------------------------
 def magnitude_from_flux(specific_flux, zero_point_flux):
