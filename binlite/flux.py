@@ -44,17 +44,18 @@ class BinaryAlphaDisk:
         outer edge of the circumbinary disk in units of the binary semi-major axis distance
         for integrating the outer-disk spectrum
     inclination_deg (optional, default=0.0):
-        viewing inclination for the coplanar binary-disk system in degreesm
+        viewing inclination for the coplanar binary-disk system in degrees
         0 degrees is face on; 90 degrees is edge on
     barycenter_velocity_c (optional, default=0.0):
         line-of-sight velocity of the system barycenter in units of c (speed of light)
+        setting >= 1 may cause problems
     argumnet_of_pericenter (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
     geometric_dimming (optional, default=False):
         include dimming due to the geometrical projection associated with inclination i
-        - set to True for standard blackbody disk
+        set to True for standard blackbody disk
 
     Public methods
     --------------
@@ -160,8 +161,7 @@ class BinaryAlphaDisk:
         """calculate magnification factor from lensing+boosting effects
 
         time : array of times in units of orbits (typically from an AccretionSeries object)
-
-        fs : fraction of total light coming from the secondary
+        fs   : fraction of total light coming from the secondary
                 := 0 when all from primary
                 := 1 when all from secondary
         """
@@ -257,7 +257,7 @@ def time(accretion_series:AccretionSeries, period_yr:float):
     ----------
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-         - holds desired number of orbits
+        holds desired number of orbits
     period_yr:
         binary's orbital period in years 
 
@@ -295,7 +295,7 @@ def normalized_flux_series(frequency:float,
         observation frequncey in Hz
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-         - also holds desired number of orbits and fourier modes in the periodic reconstruction
+        also holds desired number of orbits and fourier modes in the periodic reconstruction
     period_yr:
         binary's orbital period in years 
     total_mass_msun:
@@ -317,14 +317,17 @@ def normalized_flux_series(frequency:float,
         for integrating the outer-disk spectrum
     inclination_deg (optional, default=0.0):
         viewing inclination for the coplanar binary-disk system in degrees
+        0 degrees is face on; 90 degrees is edge on
     barycenter_velocity_c (optional, default=0.0):
-        line-of-sight velocity of the system barycenter in units of c
-    argument_of_pericenter_deg (optional, default=0.0):
+        line-of-sight velocity of the system barycenter in units of c (speed of light)
+        setting >= 1 may cause problems
+    argumnet_of_pericenter (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
     geometric_dimming (optional, default=False):
         include dimming due to the geometrical projection associated with inclination i
+        set to True for standard blackbody disk
     lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -375,7 +378,7 @@ def periodic_flux_series(frequency:float,
         observation frequncey in Hz
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity 
-        - also holds desired number of orbits and fourier modes in the periodic reconstruction
+        also holds desired number of orbits and fourier modes in the periodic reconstruction
     period_yr:
         binary's orbital period in years 
     total_mass_msun:
@@ -395,16 +398,19 @@ def periodic_flux_series(frequency:float,
     cbd_outer_edge_a (optional, default=100.0):
         outer edge of the circumbinary disk in units of the binary semi-major axis distance
         for integrating the outer-disk spectrum
-    inclination_deg_deg (optional, default=0.0):
+    inclination_deg (optional, default=0.0):
         viewing inclination for the coplanar binary-disk system in degrees
+        0 degrees is face on; 90 degrees is edge on
     barycenter_velocity_c (optional, default=0.0):
-        line-of-sight velocity of the system barycenter in units of c
-    argument_of_pericenter_deg (optional, default=0.0):
+        line-of-sight velocity of the system barycenter in units of c (speed of light)
+        setting >= 1 may cause problems
+    argumnet_of_pericenter (optional, default=0.0):
         argument of pericenter for eccentric binary orbit (see D'Orazio, Duffell & Tiede 2024)
     spectral_slope_lnln (optional, default=-1.0):
         dlog(Fnu)/dlog(nu) of the emitting spectrum in the observing band for boosting
     geometric_dimming (optional, default=False):
         include dimming due to the geometrical projection associated with inclination i
+        set to True for standard blackbody disk
     lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -438,10 +444,9 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
     ----------
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-         - holds desired number of orbits
+        holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
-
     lens_boost (optional, default=False):
         flag to include Doppler boosting and lensing magnifications
 
@@ -460,7 +465,7 @@ def normazlied_flux_series_from_bad(frequency:float, accretion_series:AccretionS
         observation frequncey in Hz
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-         - holds desired number of orbits
+        holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
     lens_boost (optional, default=False):
@@ -491,7 +496,7 @@ def periodic_flux_series_from_bad(frequency:float, accretion_series:AccretionSer
         observation frequncey in Hz
     accretion_series:
         an AccretionSeries object (see accretion.py) for binary of supplied eccentricity
-         - holds desired number of orbits
+        holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
     lens_boost (optional, default=False):
