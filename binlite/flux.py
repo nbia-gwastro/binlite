@@ -447,8 +447,6 @@ def time_from_bad(accretion_series:AccretionSeries, bad:BinaryAlphaDisk):
         holds desired number of orbits
     bad:
         a BinaryAlphaDisk object containing desired system specifics
-    lens_boost (optional, default=False):
-        flag to include Doppler boosting and lensing magnifications
 
     Return
     ------
